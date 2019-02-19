@@ -279,8 +279,8 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 		/
 		*/
 		
-		/*
 		
+		/*
 		if (collisionCheck)
 		{
 			rewardHistory = None;
