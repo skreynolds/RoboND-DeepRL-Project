@@ -24,7 +24,7 @@
 
 #define INPUT_CHANNELS 3
 #define ALLOW_RANDOM true
-#define DEBUG_DQN false
+#define DEBUG_DQN true
 #define GAMMA 0.9f
 #define EPS_START 0.9f
 #define EPS_END 0.05f
@@ -35,10 +35,10 @@
 /
 */
 
-#define INPUT_WIDTH   512
-#define INPUT_HEIGHT  512
-#define OPTIMIZER "None"
-#define LEARNING_RATE 0.0f
+#define INPUT_WIDTH   128
+#define INPUT_HEIGHT  128
+#define OPTIMIZER "RMSprop"
+#define LEARNING_RATE 0.01f
 #define REPLAY_MEMORY 10000
 #define BATCH_SIZE 8
 #define USE_LSTM false
@@ -49,8 +49,8 @@
 /
 */
 
-#define REWARD_WIN  0.0f
-#define REWARD_LOSS -0.0f
+#define REWARD_WIN  1.0f
+#define REWARD_LOSS -1.0f
 
 // Define Object Names
 #define WORLD_NAME "arm_world"
@@ -95,7 +95,7 @@ ArmPlugin::ArmPlugin() : ModelPlugin(), cameraNode(new gazebo::transport::Node()
 		vel[n] = 0.0f;
 	}
 
-	agent 	       = NULL;
+	agent 	         = NULL;
 	inputState       = NULL;
 	inputBuffer[0]   = NULL;
 	inputBuffer[1]   = NULL;
@@ -138,7 +138,7 @@ void ArmPlugin::Load(physics::ModelPtr _parent, sdf::ElementPtr /*_sdf*/)
 	/ DONE
 	*/
 	
-	gazebo::transport::SubscriberPtr cameraSub = cameraNode->Subscribe("/gazebo/arm_world/camera/link/camera/image", &ArmPlugin::onCameraMsg, this);
+	cameraSub = cameraNode->Subscribe("/gazebo/arm_world/camera/link/camera/image", &ArmPlugin::onCameraMsg, this);
 
 	// Create our node for collision detection
 	collisionNode->Init();
@@ -148,7 +148,7 @@ void ArmPlugin::Load(physics::ModelPtr _parent, sdf::ElementPtr /*_sdf*/)
 	/ DONE
 	*/
 	
-	gazebo::transport::SubscriberPtr collisionSub = collisionNode->Subscribe("/gazebo/arm_world/tube/tube_link/my_contact", &ArmPlugin::onCollisionMsg, this); 
+	collisionSub = collisionNode->Subscribe("/gazebo/arm_world/tube/tube_link/my_contact", &ArmPlugin::onCollisionMsg, this); 
 	//collisionSub = None;
 
 	// Listen to the update event. This event is broadcast every simulation iteration.
@@ -168,22 +168,22 @@ bool ArmPlugin::createAgent()
 	/ DONE
 	*/
 	
-	dqnAgent* agent = dqnAgent::Create(INPUT_WIDTH,
-									   INPUT_HEIGHT,
-									   INPUT_CHANNELS,
-									   DOF*2,
-									   OPTIMIZER,
-									   LEARNING_RATE,
-									   REPLAY_MEMORY,
-									   BATCH_SIZE, 
-					  				   GAMMA,
-					  				   EPS_START,
-					  				   EPS_END,
-					  				   EPS_DECAY, 
-					  				   USE_LSTM,
-					  				   LSTM_SIZE,
-					  				   ALLOW_RANDOM,
-					  				   DEBUG);
+	agent = dqnAgent::Create(INPUT_WIDTH,
+							 INPUT_HEIGHT,
+							 INPUT_CHANNELS,
+							 DOF*2,
+						     OPTIMIZER,
+						     LEARNING_RATE,
+						     REPLAY_MEMORY,
+						     BATCH_SIZE, 
+		  				     GAMMA,
+		  				     EPS_START,
+		  				     EPS_END,
+		  				     EPS_DECAY, 
+		  				     USE_LSTM,
+		  				     LSTM_SIZE,
+		  				     ALLOW_RANDOM,
+		  				     DEBUG_DQN);
 
 	if( !agent )
 	{
