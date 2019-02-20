@@ -24,7 +24,7 @@
 
 #define INPUT_CHANNELS 3
 #define ALLOW_RANDOM true
-#define DEBUG_DQN true
+#define DEBUG_DQN false
 #define GAMMA 0.9f
 #define EPS_START 0.9f
 #define EPS_END 0.05f
@@ -35,8 +35,8 @@
 /
 */
 
-#define INPUT_WIDTH   128
-#define INPUT_HEIGHT  128
+#define INPUT_WIDTH   64
+#define INPUT_HEIGHT  64
 #define OPTIMIZER "RMSprop"
 #define LEARNING_RATE 0.01f
 #define REPLAY_MEMORY 10000
@@ -276,21 +276,24 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 	
 		/*
 		/ TODO - Check if there is collision between the arm and object, then issue learning reward
-		/
+		/ 
 		*/
 		
-		
-		/*
-		if (collisionCheck)
+		if ( strcmp(contacts->contact(i).collision1().c_str(), COLLISION_ITEM) == 0 ||
+			 strcmp(contacts->contact(i).collision2().c_str(), COLLISION_ITEM) == 0)
 		{
-			rewardHistory = None;
+			
+			std::cout << "Collision between[" << contacts->contact(i).collision1()
+			     << "] and [" << contacts->contact(i).collision2() << "]\n";
 
-			newReward  = None;
-			endEpisode = None;
+			rewardHistory = REWARD_WIN;
+
+			newReward  = true;
+			endEpisode = true;
 
 			return;
 		}
-		*/
+		
 		
 	}
 }
@@ -336,10 +339,16 @@ bool ArmPlugin::updateAgent()
 		
 	/*
 	/ TODO - Increase or decrease the joint velocity based on whether the action is even or odd
-	/
+	/ DONE
 	*/
-	
 	float velocity = 0.0; // TODO - Set joint velocity based on whether action is even or odd.
+
+	if (action % 2 == 0){
+		velocity = vel[action/2] + actionVelDelta;
+	}else{
+		velocity = vel[action/2] - actionVelDelta;
+	}
+
 
 	if( velocity < VELOCITY_MIN )
 		velocity = VELOCITY_MIN;
@@ -606,7 +615,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 		{
 						
 			if(DEBUG){printf("GROUND CONTACT, EOE\n");}
-
+			printf("Robot hit ground");
 			rewardHistory = REWARD_LOSS;
 			newReward     = true;
 			endEpisode    = true;
@@ -633,7 +642,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 				// compute the smoothed moving average of the delta of the distance to the goal
 				avgGoalDelta  = (avgGoalDelta * 0.5) + (distDelta * (1.0 - 0.5));
 				rewardHistory = avgGoalDelta;
-				newReward     = true;	
+				newReward     = true;
 			}
 
 			lastGoalDistance = distGoal;
@@ -644,6 +653,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 	if( newReward && agent != NULL )
 	{
 		if(DEBUG){printf("ArmPlugin - issuing reward %f, EOE=%s  %s\n", rewardHistory, endEpisode ? "true" : "false", (rewardHistory > 0.1f) ? "POS+" :(rewardHistory > 0.0f) ? "POS" : (rewardHistory < 0.0f) ? "    NEG" : "       ZERO");}
+		printf("ArmPlugin - issuing reward %f, EOE=%s  %s\n", rewardHistory, endEpisode ? "true" : "false", (rewardHistory > 0.1f) ? "POS+" :(rewardHistory > 0.0f) ? "POS" : (rewardHistory < 0.0f) ? "    NEG" : "       ZERO");
 		agent->NextReward(rewardHistory, endEpisode);
 
 		// reset reward indicator
