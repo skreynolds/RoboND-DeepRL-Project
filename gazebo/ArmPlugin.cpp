@@ -10,6 +10,8 @@
 #include "cudaMappedMemory.h"
 #include "cudaPlanar.h"
 
+#include <cmath>
+
 #define PI 3.141592653589793238462643383279502884197169f
 
 #define JOINT_MIN	-0.75f
@@ -40,9 +42,9 @@
 #define OPTIMIZER "RMSprop"
 #define LEARNING_RATE 0.01f
 #define REPLAY_MEMORY 10000
-#define BATCH_SIZE 8
+#define BATCH_SIZE 256
 #define USE_LSTM false
-#define LSTM_SIZE 32
+#define LSTM_SIZE 256
 
 /*
 / TODO - Define Reward Parameters
@@ -51,6 +53,7 @@
 
 #define REWARD_WIN  1.0f
 #define REWARD_LOSS -1.0f
+#define ALPHA 0.9f
 
 // Define Object Names
 #define WORLD_NAME "arm_world"
@@ -60,7 +63,8 @@
 // Define Collision Parameters
 #define COLLISION_FILTER "ground_plane::link::collision"
 #define COLLISION_ITEM   "tube::tube_link::tube_collision"
-#define COLLISION_POINT  "arm::gripperbase::gripper_link"
+#define COLLISION_POINT_1  "arm::gripperbase::gripper_link"
+#define COLLISION_POINT_2  "arm::gripper_middle::middle_collision"
 
 // Animation Steps
 #define ANIMATION_STEPS 1000
@@ -278,9 +282,9 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 		/ TODO - Check if there is collision between the arm and object, then issue learning reward
 		/ 
 		*/
-		
-		if ( strcmp(contacts->contact(i).collision1().c_str(), COLLISION_ITEM) == 0 ||
-			 strcmp(contacts->contact(i).collision2().c_str(), COLLISION_ITEM) == 0)
+		/*
+		// TASK 1
+		if ( strcmp(contacts->contact(i).collision1().c_str(), COLLISION_ITEM) == 0 )
 		{
 			
 			std::cout << "Collision between[" << contacts->contact(i).collision1()
@@ -293,8 +297,42 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 
 			return;
 		}
+		*/
 		
-		
+		// TASK 2
+
+		// check for collision with tube
+		if ( strcmp(contacts->contact(i).collision1().c_str(), COLLISION_ITEM) == 0 )
+		{	
+			// check that tube has connected with gripper and issue reward
+			if ( strcmp(contacts->contact(i).collision2().c_str(), COLLISION_POINT_1) ||
+				 strcmp(contacts->contact(i).collision2().c_str(), COLLISION_POINT_2) == 0 ){
+
+					std::cout << "Collision between[" << contacts->contact(i).collision1()
+			     			  << "] and [" << contacts->contact(i).collision2() << "]\n";
+
+					rewardHistory = 10.0f * REWARD_WIN;
+
+					newReward  = true;
+					endEpisode = true;
+
+			return;
+
+			// if robot collides with tube but not with gripper issue punishment
+			}else{
+					std::cout << "Collision between[" << contacts->contact(i).collision1()
+			     			  << "] and [" << contacts->contact(i).collision2() << "]\n";
+
+					rewardHistory = 10.0f * REWARD_LOSS;
+
+					newReward  = true;
+					endEpisode = true;
+
+			return;
+
+			}
+			
+		}
 	}
 }
 
@@ -575,7 +613,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 	if( maxEpisodeLength > 0 && episodeFrames > maxEpisodeLength )
 	{
 		printf("ArmPlugin - triggering EOE, episode has exceeded %i frames\n", maxEpisodeLength);
-		rewardHistory = REWARD_LOSS;
+		rewardHistory = 10.0f * REWARD_LOSS;
 		newReward     = true;
 		endEpisode    = true;
 	}
@@ -616,7 +654,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 						
 			if(DEBUG){printf("GROUND CONTACT, EOE\n");}
 			printf("Robot hit ground");
-			rewardHistory = REWARD_LOSS;
+			rewardHistory = 10.f * REWARD_LOSS;
 			newReward     = true;
 			endEpisode    = true;
 		}
@@ -640,8 +678,29 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 				const float distDelta  = lastGoalDistance - distGoal;
 
 				// compute the smoothed moving average of the delta of the distance to the goal
-				avgGoalDelta  = (avgGoalDelta * 0.5) + (distDelta * (1.0 - 0.5));
-				rewardHistory = avgGoalDelta;
+				avgGoalDelta  = (avgGoalDelta * ALPHA) + (distDelta * (1.0f - ALPHA));
+				
+				// check if the arm is moving
+				if (std::abs(avgGoalDelta) < 0.1f){
+					// issue punishment if arm not moving
+					rewardHistory = 0.1f * REWARD_LOSS;
+				}
+
+				// check arm progress towards goal
+				if (avgGoalDelta > 0){
+					// good progress
+					rewardHistory += 0.1f * REWARD_WIN;
+				}else{
+					// bad progress
+					rewardHistory += 0.2f * REWARD_LOSS;
+				}
+
+				// add a penalty for distance
+				rewardHistory += -0.001f * distGoal;
+
+				// print the interim reward
+				printf("Interim reward = %f\n", rewardHistory); 
+				
 				newReward     = true;
 			}
 
@@ -653,7 +712,6 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 	if( newReward && agent != NULL )
 	{
 		if(DEBUG){printf("ArmPlugin - issuing reward %f, EOE=%s  %s\n", rewardHistory, endEpisode ? "true" : "false", (rewardHistory > 0.1f) ? "POS+" :(rewardHistory > 0.0f) ? "POS" : (rewardHistory < 0.0f) ? "    NEG" : "       ZERO");}
-		printf("ArmPlugin - issuing reward %f, EOE=%s  %s\n", rewardHistory, endEpisode ? "true" : "false", (rewardHistory > 0.1f) ? "POS+" :(rewardHistory > 0.0f) ? "POS" : (rewardHistory < 0.0f) ? "    NEG" : "       ZERO");
 		agent->NextReward(rewardHistory, endEpisode);
 
 		// reset reward indicator
