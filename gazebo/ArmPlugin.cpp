@@ -681,7 +681,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 				avgGoalDelta  = (avgGoalDelta * ALPHA) + (distDelta * (1.0f - ALPHA));
 				
 				// check if the arm is moving
-				if (std::abs(avgGoalDelta) > 0.01f){
+				if (std::abs(distDelta) > 0.01f){
 					// issue reward if arm moving
 					rewardHistory = 0.1f * REWARD_WIN;
 				}else{
@@ -690,7 +690,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 				}
 
 				// check arm progress towards goal
-				if (avgGoalDelta > 0){
+				if (distDelta > 0){
 					// good progress
 					rewardHistory += 0.1f * REWARD_WIN;
 				}else{
