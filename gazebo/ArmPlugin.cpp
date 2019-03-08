@@ -53,7 +53,7 @@
 
 #define REWARD_WIN  1.0f
 #define REWARD_LOSS -1.0f
-#define ALPHA 0.9f
+#define ALPHA 0.5f
 
 // Define Object Names
 #define WORLD_NAME "arm_world"
@@ -679,7 +679,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 
 				// compute the smoothed moving average of the delta of the distance to the goal
 				avgGoalDelta  = (avgGoalDelta * ALPHA) + (distDelta * (1.0f - ALPHA));
-				
+				/*
 				// check if the arm is moving
 				if (std::abs(distDelta) > 0.01f){
 					// issue reward if arm moving
@@ -700,6 +700,10 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 
 				// add a penalty for distance
 				rewardHistory += -0.01f * distGoal;
+				*/
+				
+				// assign reward
+				rewardHistory = avgGoalDelta;
 
 				// print the interim reward
 				printf("Interim reward = %f\n", rewardHistory); 
