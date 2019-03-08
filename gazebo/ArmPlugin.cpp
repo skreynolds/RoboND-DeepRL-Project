@@ -40,10 +40,10 @@
 #define INPUT_WIDTH   64
 #define INPUT_HEIGHT  64
 #define OPTIMIZER "Adam"
-#define LEARNING_RATE 0.1f
+#define LEARNING_RATE 0.01f
 #define REPLAY_MEMORY 10000
 #define BATCH_SIZE 256
-#define USE_LSTM false
+#define USE_LSTM true
 #define LSTM_SIZE 256
 
 /*
@@ -284,25 +284,7 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 		/ 
 		*/
 
-		/*
-		// TASK 1 - FAILED REWARD
-
-		// check for collision with tube
-		if ( strcmp(contacts->contact(i).collision1().c_str(), COLLISION_ITEM) == 0 )
-		{
-			
-			std::cout << "Collision between[" << contacts->contact(i).collision1()
-			     	  << "] and [" << contacts->contact(i).collision2() << "]\n";
-
-			rewardHistory = 10.0f * REWARD_WIN;
-
-			newReward  = true;
-			endEpisode = true;
-
-			return;
-		}
-		*/
-
+		
 		// TASK 1
 
 		// check for collision with tube
@@ -677,7 +659,13 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 						
 			if(DEBUG){printf("GROUND CONTACT, EOE\n");}
 			printf("Robot hit ground");
+
+			// TASK 1 - GROUND COLLISION REWARD
 			rewardHistory = 30.0f * REWARD_LOSS;
+			
+			//TASK 2 - GROUND COLLISION REWARD
+			//rewardHistory = 10.0f * REWARD_LOSS;
+			
 			newReward     = true;
 			endEpisode    = true;
 		}
