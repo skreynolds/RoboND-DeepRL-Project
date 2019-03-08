@@ -120,8 +120,8 @@ ArmPlugin::ArmPlugin() : ModelPlugin(), cameraNode(new gazebo::transport::Node()
 	animationStep    = 0;
 	lastGoalDistance = 0.0f;
 	avgGoalDelta     = 0.0f;
-	successfulGrabs = 0;
-	totalRuns       = 0;
+	successfulGrabs  = 0;
+	totalRuns        = 0;
 }
 
 
@@ -679,28 +679,6 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 
 				// compute the smoothed moving average of the delta of the distance to the goal
 				avgGoalDelta  = (avgGoalDelta * ALPHA) + (distDelta * (1.0f - ALPHA));
-				/*
-				// check if the arm is moving
-				if (std::abs(distDelta) > 0.01f){
-					// issue reward if arm moving
-					rewardHistory = 0.1f * REWARD_WIN;
-				}else{
-					// issue punishment is arm not moving
-					rewardHistory = 0.2f * REWARD_LOSS;
-				}
-
-				// check arm progress towards goal
-				if (distDelta > 0){
-					// good progress
-					rewardHistory += 0.1f * REWARD_WIN;
-				}else{
-					// bad progress
-					rewardHistory += 0.2f * REWARD_LOSS;
-				}
-
-				// add a penalty for distance
-				rewardHistory += -0.01f * distGoal;
-				*/
 				
 				// assign reward
 				rewardHistory = avgGoalDelta;
