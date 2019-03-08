@@ -282,13 +282,16 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 		/ TODO - Check if there is collision between the arm and object, then issue learning reward
 		/ 
 		*/
-		/*
+
+		
 		// TASK 1
+
+		// check for collision with tube
 		if ( strcmp(contacts->contact(i).collision1().c_str(), COLLISION_ITEM) == 0 )
 		{
 			
 			std::cout << "Collision between[" << contacts->contact(i).collision1()
-			     << "] and [" << contacts->contact(i).collision2() << "]\n";
+			     	  << "] and [" << contacts->contact(i).collision2() << "]\n";
 
 			rewardHistory = REWARD_WIN;
 
@@ -297,8 +300,9 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 
 			return;
 		}
-		*/
 		
+		
+		/*
 		// TASK 2
 
 		// check for collision with tube
@@ -329,7 +333,7 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 					endEpisode = true;
 
 			return;
-
+		*/
 			}
 			
 		}
