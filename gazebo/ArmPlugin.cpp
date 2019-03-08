@@ -53,7 +53,7 @@
 
 #define REWARD_WIN  1.0f
 #define REWARD_LOSS -1.0f
-#define ALPHA 0.6f // Task 1
+#define ALPHA 0.5f // Task 1
 //#define ALPHA 0.5f // Task 2
 
 // Define Object Names
@@ -284,7 +284,25 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 		/ 
 		*/
 
-		
+		/*
+		// TASK 1 - FAILED REWARD
+
+		// check for collision with tube
+		if ( strcmp(contacts->contact(i).collision1().c_str(), COLLISION_ITEM) == 0 )
+		{
+			
+			std::cout << "Collision between[" << contacts->contact(i).collision1()
+			     	  << "] and [" << contacts->contact(i).collision2() << "]\n";
+
+			rewardHistory = 10.0f * REWARD_WIN;
+
+			newReward  = true;
+			endEpisode = true;
+
+			return;
+		}
+		*/
+
 		// TASK 1
 
 		// check for collision with tube
@@ -301,8 +319,7 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 
 			return;
 		}
-		
-		
+
 		/*
 		// TASK 2
 
@@ -660,7 +677,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 						
 			if(DEBUG){printf("GROUND CONTACT, EOE\n");}
 			printf("Robot hit ground");
-			rewardHistory = 10.f * REWARD_LOSS;
+			rewardHistory = 30.0f * REWARD_LOSS;
 			newReward     = true;
 			endEpisode    = true;
 		}
@@ -684,7 +701,7 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 				const float distDelta  = lastGoalDistance - distGoal;
 
 				/*
-				// Task 1 Interim Reward Policy - FAILED POLICY
+				// Task 1 Interim Reward - FAILED REWARD
 				// compute the smoothed moving average of the delta of the distance to the goal
 				avgGoalDelta  = (avgGoalDelta * ALPHA) + (distDelta * (1.0f - ALPHA));
 				
@@ -692,7 +709,9 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 				rewardHistory = avgGoalDelta;
 				*/
 
-				// Task 1 Interim Reward Policy
+				/************************************************/
+
+				// Task 1 Interim Reward
 				// compute the smoothed moving average of the delta of the distance to the goal
 				avgGoalDelta  = (avgGoalDelta * ALPHA) + (distDelta * (1.0f - ALPHA));
 				
@@ -700,10 +719,12 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 				rewardHistory = avgGoalDelta;
 
 				// additional reward based on distance
-				rewardHistory += 0.1f * exp(-1.0f * distGoal);
-
+				rewardHistory += 0.01f * exp(-1.0f * distGoal);
+				
+				/************************************************/
+				
 				/*
-				// Task 2 Interim Reward Policy
+				// Task 2 Interim Reward
 				// compute the smoothed moving average of the delta of the distance to the goal
 				avgGoalDelta  = (avgGoalDelta * ALPHA) + (distDelta * (1.0f - ALPHA));
 				
