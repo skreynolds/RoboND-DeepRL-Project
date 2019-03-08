@@ -53,7 +53,8 @@
 
 #define REWARD_WIN  1.0f
 #define REWARD_LOSS -1.0f
-#define ALPHA 0.5f
+#define ALPHA 0.6f // Task 1
+//#define ALPHA 0.5f // Task 2
 
 // Define Object Names
 #define WORLD_NAME "arm_world"
@@ -293,7 +294,7 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 			std::cout << "Collision between[" << contacts->contact(i).collision1()
 			     	  << "] and [" << contacts->contact(i).collision2() << "]\n";
 
-			rewardHistory = REWARD_WIN;
+			rewardHistory = 10.0f * REWARD_WIN;
 
 			newReward  = true;
 			endEpisode = true;
@@ -333,10 +334,11 @@ void ArmPlugin::onCollisionMsg(ConstContactsPtr &contacts)
 					endEpisode = true;
 
 			return;
-		*/
+		
 			}
 			
 		}
+		*/
 	}
 }
 
@@ -681,12 +683,34 @@ void ArmPlugin::OnUpdate(const common::UpdateInfo& updateInfo)
 			{
 				const float distDelta  = lastGoalDistance - distGoal;
 
+				/*
+				// Task 1 Interim Reward Policy - FAILED POLICY
+				// compute the smoothed moving average of the delta of the distance to the goal
+				avgGoalDelta  = (avgGoalDelta * ALPHA) + (distDelta * (1.0f - ALPHA));
+				
+				// assign reward
+				rewardHistory = avgGoalDelta;
+				*/
+
+				// Task 1 Interim Reward Policy
 				// compute the smoothed moving average of the delta of the distance to the goal
 				avgGoalDelta  = (avgGoalDelta * ALPHA) + (distDelta * (1.0f - ALPHA));
 				
 				// assign reward
 				rewardHistory = avgGoalDelta;
 
+				// additional reward based on distance
+				rewardHistory += 0.1f * exp(-1.0f * distGoal);
+
+				/*
+				// Task 2 Interim Reward Policy
+				// compute the smoothed moving average of the delta of the distance to the goal
+				avgGoalDelta  = (avgGoalDelta * ALPHA) + (distDelta * (1.0f - ALPHA));
+				
+				// assign reward
+				rewardHistory = avgGoalDelta;
+				*/
+				
 				// print the interim reward
 				printf("Interim reward = %f\n", rewardHistory); 
 				
